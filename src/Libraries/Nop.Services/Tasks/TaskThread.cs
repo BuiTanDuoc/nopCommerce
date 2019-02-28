@@ -5,6 +5,7 @@ using System.Net;
 using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Nop.Core;
+using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Tasks;
 using Nop.Core.Infrastructure;
 using Nop.Services.Localization;
@@ -24,6 +25,7 @@ namespace Nop.Services.Tasks
         private readonly Dictionary<string, string> _tasks;
         private Timer _timer;
         private bool _disposed;
+        private static readonly int? _timeout;
 
         #endregion
 
@@ -33,6 +35,7 @@ namespace Nop.Services.Tasks
         {
             _storeContext = EngineContext.Current.Resolve<IStoreContext>();
             _scheduleTaskUrl = $"{_storeContext.CurrentStore.Url}{NopTaskDefaults.ScheduleTaskPath}";
+            _timeout = EngineContext.Current.Resolve<CommonSettings>().NopWebClientTimeout;
         }
 
         internal TaskThread()
@@ -64,7 +67,7 @@ namespace Nop.Services.Tasks
 
                 try
                 {
-                    using (var client = new WebClient())
+                    using (var client = new NopWebClient(_timeout))
                     {
                         client.UploadValues(_scheduleTaskUrl, postData);
                     }
